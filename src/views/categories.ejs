@@ -5,22 +5,11 @@
             <p>Browse service projects by the kind of impact you want to make:</p>
         </section>
         <ul class="category-list">
-            <li class="category-card">
-                <h3>Environmental</h3>
-                <p>Projects focused on cleaning up, restoring, and protecting shared outdoor spaces.</p>
-            </li>
-            <li class="category-card">
-                <h3>Educational</h3>
-                <p>Projects focused on tutoring, mentoring, and expanding access to learning.</p>
-            </li>
-            <li class="category-card">
-                <h3>Community Service</h3>
-                <p>Projects focused on supporting neighbors and strengthening local organizations.</p>
-            </li>
-            <li class="category-card">
-                <h3>Health and Wellness</h3>
-                <p>Projects focused on physical, mental, and community well-being.</p>
-            </li>
+            <% categories.forEach(category => { %>
+                <li class="category-card">
+                    <h3><%= category.name %></h3>
+                </li>
+            <% }); %>
         </ul>
     </main>
 <%- include('partials/footer') %>
