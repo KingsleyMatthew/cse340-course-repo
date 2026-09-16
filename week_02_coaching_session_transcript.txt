@@ -1,0 +1,133 @@
+Week 02 Coaching Session Transcript
+
+Coach: Welcome! Just to be clear from the start, this is a coaching session, not a test. It is perfectly okay—and even encouraged—to say 'I don't know' or 'I made a mistake.' That's the fastest way we'll learn today.
+
+Coach: I’m your supportive Learning Coach and Software Mentor for this session. I’ll help you explain your own decisions, identify knowledge gaps, and work through mistakes without judgment.
+
+Coach: I’ll also follow the one-question-at-a-time rule throughout our session. We’ll naturally work through all four required topics:
+1. Relational Database Design and Structure
+2. Server-Side Data Access Logic (Node.js)
+3. Express Server Logic and Routing
+4. Client-Side Rendering (EJS Templates)
+
+Coach: I’m currently in a chat interface, so whenever we need to discuss your code, I’ll ask you to paste the relevant code snippet here rather than assuming I can see your files.
+
+Coach: To begin: what name should I use for you during this coaching session?
+
+Kingsley: Kingsley
+
+Coach: Great, Kingsley. 👍
+This is a safe space to explain your thinking, make corrections, and say “I don’t know” whenever you need to. I’ll guide you rather than give you answers outright.
+Let’s start with Topic 1: Relational Database Design and Structure.
+Please paste the relevant database code you worked on for this assignment—ideally your CREATE TABLE statements and one SQL query you used.
+
+Kingsley:
+-- ========================================
+-- Category Table
+-- ========================================
+CREATE TABLE category (
+    category_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
+);
+
+-- ========================================
+-- Project-Category Join Table
+-- ========================================
+-- A project can belong to one or more categories, and a category can be
+-- associated with one or more projects, so this many-to-many relationship
+-- requires its own table. The composite primary key prevents the same
+-- project/category pair from being inserted more than once.
+CREATE TABLE project_category (
+    project_id INTEGER NOT NULL REFERENCES service_projects(project_id),
+    category_id INTEGER NOT NULL REFERENCES category(category_id),
+    PRIMARY KEY (project_id, category_id)
+);
+
+SELECT category_id, name
+FROM public.category;
+
+Coach: Nice, Kingsley. You’ve shared a solid example of a many-to-many relationship: a project can have multiple categories, and a category can belong to multiple projects. The PRIMARY KEY (project_id, category_id) also prevents duplicate combinations.
+Why did you need the project_category join table instead of putting a single category_id column directly inside the service_projects table?
+
+Kingsley: A category_id column on service_projects only allows one category per project (a one-to-many relationship). But the requirement was a many-to-many relationship — a project can have multiple categories, and a category can span multiple projects. A single column can't represent that; a join table can, since it lets a project appear in multiple rows, once per category it belongs to.
+
+Coach: Excellent, Kingsley. That explanation shows you understand the reason behind the database structure, not just what the SQL says.
+What does this query do, and why would you use SELECT category_id, name FROM public.category instead of simply selecting * from the table?
+
+Kingsley: It selects only the category_id and name columns from every row in category — not everything.
+Naming the columns explicitly (instead of SELECT *) means the query only returns what the code actually uses, and won't unexpectedly change if I adds a new column to the table later. It also matches the pattern used in your other models.
+
+Coach: That’s a strong explanation, Kingsley. You understand both what the query returns and why explicitly naming the columns is a better practice here.
+That completes our discussion of Topic 1: Relational Database Design and Structure. ✅
+
+Coach: Now let’s move to Topic 2: Server-Side Data Access Logic (Node.js).
+Please paste the Node.js function from your assignment that connects to the database and retrieves data so we can examine how the data moves from PostgreSQL into your application.
+
+Kingsley:
+import db from './db.js'
+
+const getAllCategories = async() => {
+    const query = `
+        SELECT category_id, name
+      FROM public.category;
+    `;
+
+    const result = await db.query(query);
+
+    return result.rows;
+}
+
+export {getAllCategories}
+
+Coach: Good, Kingsley. This function shows the full basic flow: it imports the database connection, defines an asynchronous function, builds the SQL query, sends it to PostgreSQL with db.query(), and returns the rows.
+Why is getAllCategories declared with async, and what is happening when the code reaches await db.query(query)?
+
+Kingsley: async is needed because await only works inside an async function. At await db.query(query), the function pauses and waits for Postgres to respond — without blocking the rest of the app — then resumes with the result once the database replies.
+
+Coach: Exactly, Kingsley. You’ve got the important distinction: await lets this particular function wait for the database operation to finish without freezing the whole Node.js application.
+That completes Topic 2: Server-Side Data Access Logic. ✅
+
+Coach: Now let’s move to Topic 3: Express Server Logic and Routing.
+Please paste the specific routing declaration from your main Express server file that you want to discuss.
+
+Kingsley:
+app.get('/categories', async (req, res) => {
+    const categories = await getAllCategories();
+    const title = 'Service Project Categories';
+
+    res.render('categories', { title, categories });
+});
+
+Coach: Nice, Kingsley. This route connects the pieces we just discussed: the browser requests /categories, Express calls getAllCategories(), and the resulting data is prepared for the EJS template.
+What happens when a user visits /categories, and why did you use app.get('/categories', ...) for this particular route?
+
+Kingsley: A GET request for /categories matches app.get('/categories', ...), which awaits getAllCategories() to fetch the rows from the database, then renders categories.ejs with that data. The finished HTML is sent back to the browser.
+app.get is used because this route only displays data — nothing is submitted or changed, so GET (not POST) is the right fit.
+
+Coach: Well explained, Kingsley. You clearly understand the difference between the URL path, the HTTP method, and what the route handler does with the request.
+That completes Topic 3: Express Server Logic and Routing. ✅
+
+Coach: Now we’re on the final required topic: Topic 4 — Client-Side Rendering with EJS Templates.
+Please paste the specific line from your categories.ejs file that displays one of the category values, such as the category name.
+
+Kingsley:
+<h3><%= category.name %></h3>
+
+Coach: Exactly, Kingsley. 👍
+<%= category.name %> is EJS syntax that takes the name property from the current category object and outputs it into the generated HTML. The <h3> then displays that value as a heading in the browser.
+You’ve now demonstrated all four required areas:
+- Database design: tables, relationships, many-to-many structure, SQL query
+- Node.js data access: database query function and asynchronous data retrieval
+- Express routing: GET route, path mapping, and route handler
+- EJS rendering: passing data to the template and displaying it
+Before we conclude, I want to make sure you can explain the complete flow in your own words.
+Starting from a user visiting /categories, explain the journey of the data all the way from the browser → Express route → Node.js/database function → PostgreSQL → back to EJS → the final HTML shown to the user.
+
+Kingsley:
+1. Browser sends a GET request to /categories.
+2. Express route (app.get('/categories', ...)) matches it and runs, calling await getAllCategories().
+3. Node.js/database function sends SELECT category_id, name FROM public.category; through the connection pool.
+4. PostgreSQL runs the query and returns the matching rows.
+5. The function returns result.rows back to the route, which passes it to EJS via res.render('categories', { title, categories }).
+6. EJS loops through categories with <% categories.forEach(...) %> and outputs each one with <%= category.name %>.
+7. The finished HTML is sent to the browser and displayed as the categories page.
