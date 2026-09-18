@@ -1,0 +1,26 @@
+<%- include('partials/header') %>
+    <main id="main-content">
+        <section class="page-intro">
+            <h1><%= title %></h1>
+            <h2><%= organizationDetails.name %></h2>
+            <img src="/images/<%= organizationDetails.logo_filename %>" alt="<%= organizationDetails.name %> logo">
+            <p><%= organizationDetails.description %></p>
+            <p><a href="mailto:<%= organizationDetails.contact_email %>"><%= organizationDetails.contact_email %></a></p>
+        </section>
+
+        <h2>Service Projects</h2>
+        <ul class="project-list">
+            <% projects.forEach(project => { %>
+                <% const formattedDate = new Date(project.project_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }); %>
+                <li class="project-card">
+                    <h3><a href="/project/<%= project.project_id %>"><%= project.title %></a></h3>
+                    <p><%= formattedDate %></p>
+                    <p><%= project.description %></p>
+                    <p class="project-location">Location: <%= project.location %></p>
+                </li>
+            <% }); %>
+        </ul>
+
+        <p><a href="/organizations">Back to all organizations</a></p>
+    </main>
+<%- include('partials/footer') %>
