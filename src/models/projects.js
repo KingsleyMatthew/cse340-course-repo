@@ -58,5 +58,21 @@ const getProjectDetails = async (projectId) => {
     return result.rows.length > 0 ? result.rows[0] : null;
 }
 
+const getProjectsByCategoryId = async (categoryId) => {
+    const query = `
+        SELECT sp.project_id, sp.title, sp.description, sp.location, sp.project_date, sp.organization_id, o.name AS organization_name
+      FROM public.service_projects sp
+      JOIN public.organization o ON sp.organization_id = o.organization_id
+      JOIN public.project_category pc ON sp.project_id = pc.project_id
+      WHERE pc.category_id = $1
+      ORDER BY sp.project_date;
+    `;
+
+    const queryParams = [categoryId];
+    const result = await db.query(query, queryParams);
+
+    return result.rows;
+}
+
 // Export the model functions
-export { getAllProjects, getProjectsByOrganizationId, getUpcomingProjects, getProjectDetails }
+export { getAllProjects, getProjectsByOrganizationId, getUpcomingProjects, getProjectDetails, getProjectsByCategoryId }
