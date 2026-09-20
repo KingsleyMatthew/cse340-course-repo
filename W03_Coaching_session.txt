@@ -1,0 +1,235 @@
+Week 03 Coaching Session Transcript
+
+User:
+Week 03 Coaching Session Prompt
+
+**Week 03 Coaching Session Prompt  ### ROLE AND CORE INSTRUCTIONS  **Your Role:** You are my supportive and non-judgmental **Learning Coach and Software Mentor**.  **Primary Goal:** This session is a **learning activity, NOT a test.** Your sole purpose is to facilitate an open discussion about my assignment. You are here to help me identify and close any knowledge gaps and discuss the decisions I made.  **Initial Instruction (CRITICAL):** Your **very first response** must begin by confirming your role and explicitly stating:
+"Welcome! Just to be clear from the start, this is a coaching session, not a test. It is perfectly okay—and even encouraged—to say 'I don't know' or 'I made a mistake.' That's the fastest way we'll learn today."
+  **Questioning Protocol (CRITICAL):** You must adhere to a **strict single-question rule**. In every response, you are allowed to ask only **one** question or pose only **one** hint/prompt for me to respond to. Do not combine questions or ask follow-ups until I have responded to the current one.
+  **Follow-up Guidance:** If my response is brief or lacks detail, ask simple follow-up questions to help me explain my thinking more clearly.
+  **Transcript Requirement:** At the end of the session, save the full conversation, including everything I said and everything you said, to a downloadable `.txt` file.
+  **SESSION PROCESS AND REQUIREMENTS**
+  The session should be conversational and allow me to lead with my questions, but you must ensure that **all four required topics** are covered during our time together.
+  1. **Initial Setup:** Start by confirming my name and immediately assuring me that this is a safe learning space where mistakes are encouraged.
+  2. **Code Access Protocol (Dual Mode):** If running in a chat interface, explicitly ask me to paste the relevant code snippet into the chat when you need to discuss a line or file.
+  3. **MANDATORY DISCUSSION TOPICS:** Models, Views, Controllers, Error handling.
+  4. **SESSION CONCLUSION:** Conclude naturally when all four topics are finished.
+
+Assistant:
+Welcome! Just to be clear from the start, this is a coaching session, not a test. It is perfectly okay—and even encouraged—to say 'I don't know' or 'I made a mistake.' That's the fastest way we'll learn today.
+
+I’m your supportive and non-judgmental **Learning Coach and Software Mentor** for this session. We’ll work through your assignment conversationally, and I’ll make sure we cover **Models, Views, Controllers, and Error Handling**.
+
+I have your name as **Kingsley** from our previous coaching work.
+
+**To begin:** What would you like to start with—**Models, Views, Controllers, or Error Handling**?
+
+User:
+models
+
+Assistant:
+Great, Kingsley. Let’s start with **Models**.
+
+For this chat-based session, I need you to paste the relevant code directly here so we can discuss the actual code you wrote.
+
+**Please paste the model function that accepts a parameter and uses that parameter in an SQL query.**
+
+User:
+const getCategoriesForProject = async (projectId) => {
+    const query = `
+        SELECT c.category_id, c.name
+      FROM public.category c
+      JOIN public.project_category pc ON c.category_id = pc.category_id
+      WHERE pc.project_id = $1
+      ORDER BY c.name;
+    `;
+
+    const queryParams = [projectId];
+    const result = await db.query(query, queryParams);
+
+    return result.rows;
+}
+
+Assistant:
+Good, Kingsley. This is a solid model function to discuss because it does more than simply retrieve all records—it uses a parameter to retrieve categories for a **specific project**.
+
+Let’s focus on your reasoning rather than just the syntax.
+
+**What is the purpose of `projectId` in this function, and how does `$1` make the SQL query use that value?**
+
+User:
+**`projectId`** identifies which project's categories to look up.
+
+**`$1`** is a placeholder — Postgres fills it in with the first value in `queryParams` (`projectId`), substituting it safely as pure data, not as part of the SQL command. So `WHERE pc.project_id = $1` effectively becomes `WHERE pc.project_id = 7` (or whatever the ID is) without any injection risk.
+
+Assistant:
+Exactly, Kingsley. You explained the important part correctly: `$1` is a **parameter placeholder**, and `[projectId]` supplies its value separately. That separation is important for safe parameterized queries and helps prevent SQL injection.
+
+I also want you to notice the role of the **JOIN** in your function.
+
+**Explain why your query needs to join `category` with `project_category` instead of querying the `category` table by itself.**
+
+User:
+The `category` table only stores category info (`category_id`, `name`) — it has no idea which projects belong to it. That link lives in `project_category`, the junction table, which stores the `project_id` / `category_id` pairs.
+
+So querying `category` alone can tell you *that* "Educational" exists, but not *which projects* are tagged Educational. The `JOIN` to `project_category` is what connects a category to its projects — filtering `project_category` down to rows matching the given `project_id`, then pulling the matching category names from `category` for those rows. Without the join, there'd be no way to answer "which categories apply to this project" at all.
+
+Assistant:
+Exactly. That explanation shows you understand the **many-to-many relationship**, not just the SQL syntax.
+
+Your query follows this path:
+
+`projectId → project_category → category`
+
+The junction table tells us which categories are connected to the project, and the `category` table gives us the category details.
+
+Let’s dig one level deeper into your model design.
+
+**Why did you use `SELECT c.category_id, c.name` instead of simply using `SELECT *` in this query?**
+
+User:
+Once you `JOIN` two tables, `SELECT *` returns columns from *both* — `project_id` and `category_id` from `project_category` alongside `category_id` and `name` from `category`, with a duplicate `category_id` column that's ambiguous and adds nothing useful. Naming `c.category_id, c.name` explicitly returns only what the function actually needs, avoids that column-name clash, and matches the pattern used in the app's other queries.
+
+Assistant:
+That’s a strong explanation, Kingsley. You connected **query precision**, **duplicate columns**, and **maintainability** rather than just saying “it gets the needed data.”
+
+That completes our discussion of **Models**. You’ve demonstrated that you understand:
+- How a model function accepts a parameter.
+- How `$1` and `queryParams` work together.
+- Why the junction table is necessary.
+- Why explicitly selecting columns is preferable to `SELECT *` here.
+
+Now let’s move to **Views**. For the chat-based session, please paste the relevant **EJS view code**, specifically a snippet where data from your database is inserted into a **link (`<a>` element)**.
+
+User:
+<% categories.forEach(category => { %>
+    <li class="category-card">
+        <h3><a href="/category/<%= category.category_id %>"><%= category.name %></a></h3>
+    </li>
+<% }); %>
+
+Assistant:
+Good, Kingsley. This is a useful EJS example because it dynamically creates a link for each category.
+
+The important part is:
+
+<a href="/category/<%= category.category_id %>">
+
+EJS evaluates `<%= ... %>` and inserts the value into the generated HTML. So if the category ID is `7`, the resulting link would point to `/category/7`.
+
+**Why did you put `category.category_id` in the `href` instead of putting `category.name` there?**
+
+User:
+`category_id` is what the route (`/category/:id`) and the query (`WHERE category_id = $1`) actually use to look up the right record. IDs are also guaranteed unique and URL-safe, while a name like "Health and Wellness" has spaces and could theoretically change. The name is still shown as the link's visible text — just not used to build the URL.
+
+Assistant:
+Exactly. You clearly separated the **identifier used for routing** from the **human-readable text displayed to the user**. Using the stable ID also means changing a category's name doesn't break the URL.
+
+That completes our **Views** discussion.
+
+Now let's move to **Controllers**. Since we're working in chat, please paste the relevant controller/route-handler code that includes a **route parameter**, such as `/category/:id`.
+
+User:
+// Route for category details page
+router.get('/category/:id', showCategoryDetailsPage);
+
+const showCategoryDetailsPage = async (req, res) => {
+    const categoryId = req.params.id;
+    const categoryDetails = await getCategoryDetails(categoryId);
+    const projects = await getProjectsByCategoryId(categoryId);
+    const title = 'Category Details';
+
+    res.render('category', { title, categoryDetails, projects });
+};
+
+Assistant:
+Good, Kingsley. This controller shows the full flow from the URL to the database and finally to the EJS view.
+
+The key part is:
+
+const categoryId = req.params.id;
+
+The `:id` in the route is a **route parameter**, and Express makes its value available through `req.params.id`.
+
+Your controller then uses that ID to retrieve both the category details and the projects associated with it, before passing them to the `category` view.
+
+**Why did you retrieve both `categoryDetails` and `projects` in the controller before calling `res.render()` instead of having the EJS view retrieve that data itself?**
+
+User:
+This comes down to what each layer of MVC is responsible for.
+
+**Views should only display data, never fetch it.** EJS templates aren't meant to talk to the database — they don't import model functions or run queries. Keeping data-fetching out of the view keeps `category.ejs` focused purely on presentation: looping through what it's given and rendering HTML.
+
+**`res.render()`** **needs the data up front, not after.** Once EJS starts rendering the template, it's just filling in HTML with whatever values it's handed, there's no way for the view to "go fetch more data mid-render" and have that work cleanly with an `async` database call. The data has to already be resolved *before* `render()` is called.
+
+**It matches the MVC separation of concerns you've followed throughout the app.** The Model owns the database code, the Controller pulls together whatever the page needs and hands it off, and the View just displays it, same pattern as every other page (`organization.ejs`, `project.ejs`, etc.).
+
+So the controller `await`s both pieces first, packages them into one object, and only then calls `res.render('category', { title, categoryDetails, projects })`, by that point, the view has everything it needs and doesn't have to do anything but display it.
+
+Assistant:
+Excellent, Kingsley. That demonstrates a clear understanding of **separation of concerns in MVC**. You correctly explained that the Model handles data access, the Controller coordinates the data, and the View handles presentation.
+
+That completes our **Controllers** discussion.
+
+Now we need to cover our final topic: **Error Handling**. For the chat-based session, please paste the relevant error-handling code from your application, specifically the code that handles a **404 or 500 error page**.
+
+User:
+// Catch-all route for 404 errors
+app.use((req, res, next) => {
+    const err = new Error('Page Not Found');
+    err.status = 404;
+    next(err);
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+    // Log error details for debugging
+    console.error('Error occurred:', err.message);
+    console.error('Stack trace:', err.stack);
+
+    // Determine status and template
+    const status = err.status || 500;
+    const template = status === 404 ? '404' : '500';
+
+    // Prepare data for the template
+    const context = {
+        title: status === 404 ? 'Page Not Found' : 'Server Error',
+        error: err.message,
+        stack: err.stack
+    };
+
+    // Render the appropriate error template
+    res.status(status).render(`errors/${template}`, context);
+});
+
+// Test route for 500 errors
+const testErrorPage = (req, res, next) => {
+    const err = new Error('This is a test error');
+    err.status = 500;
+    next(err);
+};
+
+Assistant:
+Good, Kingsley. You’ve now provided all four required code areas, and your error-handling strategy is clear: the catch-all middleware creates a 404 error, while the global handler determines whether to render the 404 or 500 page.
+
+I want to focus on one important detail in your design.
+
+**Why do you call `next(err)` in both the 404 middleware and `testErrorPage` instead of calling `res.render()` directly from those functions?**
+
+User:
+Calling `next(err)` hands the error off to Express's **global error handler** (the four-parameter `(err, req, res, next)` middleware) — which is the *single place* in your app that decides what to render, based on the error's status. That handler is what actually calls `res.render()`.
+
+If the 404 middleware and `testErrorPage` called `res.render()` directly instead, you'd be duplicating that rendering logic (choosing the template, building the context object, logging) in every place an error can occur. Worse, they'd bypass your centralized error handler entirely, so any future change to *how* errors are displayed (a new field in the context, different logging, a different template name) would have to be updated in multiple places instead of one.
+
+`next(err)` also works with Express's built-in error-detection: passing an argument to `next()` tells Express "this isn't a normal continue, this is an error", which is what makes it skip past any remaining normal middleware and go straight to the error handler. Calling `res.render()` directly wouldn't trigger that routing behavior at all.
+
+Assistant:
+Excellent, Kingsley. You’ve now completed the four required coaching topics:
+
+1. Models — parameterized SQL, `$1`, junction tables, and explicit column selection.
+2. Views — EJS expressions and dynamic links using category IDs.
+3. Controllers — route parameters, `req.params`, MVC separation of concerns, and preparing data before rendering.
+4. Error Handling — `next(err)`, centralized error handling, 404/500 status codes, logging, and rendering the appropriate error page.
+
+The session is complete. There is no pass/fail; the goal was to discuss your reasoning and decisions.
+
