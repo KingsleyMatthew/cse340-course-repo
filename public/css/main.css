@@ -255,6 +255,67 @@ main {
     color: var(--color-white);
 }
 
+/* Forms (new organization form, etc.) ---------------------------------- */
+
+form {
+    max-width: 32rem;
+    margin: 1.5rem 0 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--color-evergreen-dark);
+}
+
+.form-group input,
+.form-group textarea {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    padding: 0.6em 0.8em;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background-color: var(--color-white);
+    color: var(--color-ink);
+}
+
+.form-group textarea {
+    min-height: 6rem;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: 3px solid var(--color-ochre);
+    outline-offset: 1px;
+    border-color: var(--color-evergreen);
+}
+
+form button[type="submit"] {
+    align-self: flex-start;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.7em 1.6em;
+    border: 2px solid transparent;
+    border-radius: var(--radius);
+    background-color: var(--color-evergreen);
+    color: var(--color-white);
+    cursor: pointer;
+}
+
+form button[type="submit"]:hover {
+    background-color: var(--color-evergreen-dark);
+}
+
 /* Category tags (project details page) -------------------------------- */
 
 .tag-list {
