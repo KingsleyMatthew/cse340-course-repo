@@ -317,7 +317,8 @@ form {
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
     font-family: var(--font-body);
     font-size: 1rem;
     padding: 0.6em 0.8em;
@@ -333,7 +334,8 @@ form {
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group select:focus {
     outline: 3px solid var(--color-ochre);
     outline-offset: 1px;
     border-color: var(--color-evergreen);
