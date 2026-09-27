@@ -1,0 +1,285 @@
+"""Week 04 Coaching Session Transcript
+
+COACH:
+Welcome! Just to be clear from the start, this is a coaching session, not a test. It is perfectly okay—and even encouraged—to say 'I don't know' or 'I made a mistake.' That's the fastest way we'll learn today.
+
+I’ll be your supportive Learning Coach and Software Mentor. We’ll work through your Week 04 assignment together, focusing on your reasoning rather than simply giving you answers. We’ll make sure we cover all four required topics: form submissions, update forms, sessions/flash messages, and server-side validation.
+
+I have your name as Kingsley Matthew Edet.
+
+Are you ready to begin, Kingsley?
+
+STUDENT:
+yes
+
+COACH:
+Great, Kingsley. 👍
+
+Let’s start with Topic 1: Handling Form Submissions.
+
+Since we’re working in a chat interface, please paste the relevant form-handling code snippet from your Week 04 assignment—ideally the route/controller that receives the submitted form data.
+
+STUDENT:
+// Route for new category page
+router.get('/new-category', showNewCategoryForm);
+
+// Route to handle new category form submission
+router.post('/new-category', categoryValidation, processNewCategoryForm);
+
+
+const processNewCategoryForm = async (req, res) => {
+    // Check for validation errors
+    const results = validationResult(req);
+    if (!results.isEmpty()) {
+        // Validation failed - loop through errors
+        results.array().forEach((error) => {
+            req.flash('error', error.msg);
+        });
+
+        // Redirect back to the new category form
+        return res.redirect('/new-category');
+    }
+
+    const { name } = req.body;
+
+    const categoryId = await createCategory(name);
+
+    // Set a success flash message
+    req.flash('success', 'Category added successfully!');
+
+    res.redirect(`/category/${categoryId}`);
+};
+
+COACH:
+Good. This is a solid example of form submission handling because it shows the flow from the POST request → validation → request body → database function → redirect.
+
+Let’s focus on your understanding of that flow.
+
+What does `const { name } = req.body;` do in this code, and why is `req.body` necessary for processing the submitted category form?
+
+STUDENT:
+`const { name } = req.body;` pulls the `name` field out of the request body — same as `const name = req.body.name;`, just shorthand.
+
+`req.body` holds the actual form data the browser submitted. It only exists because `express.urlencoded()` middleware parses the raw POST body into a usable object — without it, `req.body` would be `undefined` and there'd be no way to know what the user typed.
+
+COACH:
+Exactly. You explained both the destructuring and the role of the body-parsing middleware correctly.
+
+Now let’s go one step deeper into your form-handling flow:
+
+Why does your code call `createCategory(name)` only after checking `validationResult(req)`, instead of creating the category immediately from `req.body`?
+
+STUDENT:
+Because the whole point of validation is to stop bad data before it reaches the database, checking `validationResult(req)` first means `createCategory(name)` only ever runs on data that's already been confirmed valid.
+
+If the order were reversed (create first, validate after), the category would already be saved by the time you found out the name was empty or too short, there'd be no way to "undo" that. Checking validation first lets the code redirect back to the form instead of calling `createCategory` at all, so invalid data never touches the database in the first place.
+
+This is also why the check uses `return res.redirect('/new-category')`, the `return` is what actually prevents `createCategory(name)` from running when validation fails. Without it, the code would send the redirect but then keep executing the rest of the function anyway.
+
+COACH:
+Exactly. That’s a strong explanation, especially your point about `return`: it stops the function from continuing after the redirect.
+
+That completes the key idea for Topic 1: Handling Form Submissions—you’ve explained how the submitted data reaches `req.body`, how it is extracted, and why validation happens before the database operation.
+
+Topic 2: Forms for Updates
+
+Now I want you to show how you handled editing an existing category/entity.
+
+Since we're in a chat interface, please paste the EJS snippet from your assignment that populates an update/edit form with the existing entity's data.
+
+STUDENT:
+<%- include('partials/header') %>
+<main id="main-content">
+    <h1><%= title %></h1>
+
+    <form action="/edit-category/<%= categoryDetails.category_id %>" method="POST">
+        <div class="form-group">
+            <label for="name">Category Name</label>
+            <input
+                type="text"
+                id="name"
+                name="name"
+                value="<%= categoryDetails.name %>"
+                required
+                maxlength="100"
+            />
+        </div>
+
+        <button type="submit">Update Category</button>
+    </form>
+
+</main>
+<%- include('partials/footer') %>
+
+COACH:
+Good. This is a clear update form because it takes the existing `categoryDetails` from the server and uses it to pre-fill the form.
+
+The important part is:
+
+value="<%= categoryDetails.name %>"
+
+That means the user doesn't have to type the existing category name again when editing it.
+
+Why does the form action use `/edit-category/<%= categoryDetails.category_id %>` instead of simply `/edit-category`?
+
+STUDENT:
+Because the route needs to know which category to update, `/edit-category` alone doesn't identify one.
+
+The route is defined as `/edit-category/:id`, so the ID has to be part of the URL itself. Without it, `processEditCategoryForm` would have no `req.params.id` to work with, and `updateCategory(categoryId, name)` would have nothing to tell it which row in the `category` table to change.
+
+Using `categoryDetails.category_id` also guarantees the form always submits to the correct category — the one this particular edit form was loaded for, rather than relying on some other hidden mechanism to track that. It's the same reason `/edit-organization/:id` and `/edit-project/:id` work this way too: the ID in the URL is what makes "edit" mean "edit this specific one" instead of "edit something."
+
+COACH:
+Exactly. You connected the EJS value to the route parameter and then to the database update, which is the full flow we wanted to discuss for Topic 2.
+
+You also correctly identified the purpose of `categoryDetails.category_id`: it identifies the specific record being edited.
+
+Topic 3: Sessions and Flash Messages
+
+Now let’s move to sessions and flash messages. You already used `req.flash()` in the code you shared, but I want to see the actual session/flash setup.
+
+Please paste the code from your application where you configure the session and flash-message middleware.
+
+STUDENT:
+import session from 'express-session';
+...
+import flash from './src/middleware/flash.js';
+
+// Load the session secret from environment variables
+const SESSION_SECRET = process.env.SESSION_SECRET;
+
+...
+
+/**
+  * Configure Express middleware
+  */
+
+// Set up session management
+app.use(session({
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: { maxAge: 60 * 60 * 1000 } // Session expires after 1 hour of inactivity
+}));
+
+// Use flash message middleware
+app.use(flash);
+
+
+const flashMiddleware = (req, res, next) => {
+    req.flash = function(type, message) {
+        if (!req.session.flash) {
+            req.session.flash = {
+                success: [],
+                error: [],
+                warning: [],
+                info: []
+            };
+        }
+
+        if (type && message) {
+            if (!req.session.flash[type]) {
+                req.session.flash[type] = [];
+            }
+            req.session.flash[type].push(message);
+            return;
+        }
+
+        if (type && !message) {
+            const messages = req.session.flash[type] || [];
+            req.session.flash[type] = [];
+            return messages;
+        }
+
+        const allMessages = req.session.flash || {
+            success: [],
+            error: [],
+            warning: [],
+            info: []
+        };
+
+        req.session.flash = {
+            success: [],
+            error: [],
+            warning: [],
+            info: []
+        };
+
+        return allMessages;
+    };
+
+    next();
+}
+
+const flashLocals = (req, res, next) => {
+    res.locals.flash = req.flash;
+    next();
+}
+
+const flash = (req, res, next) => {
+    flashMiddleware(req, res, () => {
+        flashLocals(req, res, next);
+    });
+};
+
+export default flash;
+
+COACH:
+Good. You’ve shown both sides of the implementation: the session stores the flash data, while your custom middleware provides the `req.flash()` function for adding and retrieving messages.
+
+One important detail is that your middleware is registered after `express-session`, so `req.flash()` has access to `req.session`.
+
+In your own words, why are flash messages stored in the session instead of simply setting a normal variable like `let message = "Category added successfully!"`?
+
+STUDENT:
+Because of what happens between setting the message and displaying it: a redirect.
+
+Look at the flow, `processNewCategoryForm` sets the flash message, then calls `res.redirect(...)`. A redirect isn't "keep running the same request and show different content", it tells the browser to make a brand new HTTP request to a different URL. That new request hits a completely different route handler, running fresh, with none of the local variables from the first request still around. A plain `let message = "..."` would exist for exactly as long as that one function call, then vanish the moment the response was sent, the next request wouldn't know it ever existed.
+
+The session solves this because it's not tied to a single request, it's data that persists on the server between requests from the same browser, matched up via a cookie. So storing the message in `req.session.flash` means: request 1 writes it into storage that outlives the request itself, then request 2 (the page the user lands on after the redirect) can read it back out of that same storage.
+
+That's also why the flash function clears the message after reading it, once it's been displayed, it's no longer needed sitting in the session waiting to reappear on the next page too.
+
+COACH:
+Exactly. You clearly understand the request-to-request lifecycle and why the session is useful here. Your explanation of why flash messages are cleared after retrieval is also important: it gives them their intended one-time message behavior.
+
+That completes Topic 3: Sessions and Flash Messages.
+
+Topic 4: Server-side Validation
+
+You already have validation middleware in your route:
+
+router.post('/new-category', categoryValidation, processNewCategoryForm);
+
+For the final topic, I want to examine what `categoryValidation` actually does.
+
+Please paste your `categoryValidation` code—the server-side validation rules you created for the category form.
+
+STUDENT:
+// Define validation rules for category form
+const categoryValidation = [
+    body('name')
+        .trim()
+        .notEmpty()
+        .withMessage('Category name is required')
+        .isLength({ min: 3, max: 100 })
+        .withMessage('Category name must be between 3 and 100 characters')
+];
+
+COACH:
+Good. Your validation rules handle two important cases: the name cannot be empty, and it must contain between 3 and 100 characters. Using `.trim()` also helps prevent whitespace from being treated as meaningful input.
+
+That completes the four required topics:
+
+1. Handling Form Submissions — `req.body`, validation, and passing data to `createCategory()`.
+2. Forms for Updates — EJS pre-population and identifying the specific record with `category_id`.
+3. Sessions and Flash Messages — maintaining messages across redirects using the session.
+4. Server-side Validation — validating input before allowing database operations.
+
+Before we finish, I want you to reflect on the last topic:
+
+Why is server-side validation still necessary even though your HTML form already has attributes such as `required` and `maxlength="100"`?
+
+STUDENT:
+Client-side validation (`required`, `maxlength`) only runs in a browser, someone can bypass it with `curl`, dev tools, or by disabling JS. If the server trusted that alone, bad data (blank, too short, too long) could still reach the database. Server-side validation is the only check that can't be skipped, so it's what actually protects the data.
+"""
