@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 
 // Import any needed model functions
-import { createUser } from '../models/users.js';
+import { createUser, authenticateUser } from '../models/users.js';
 
 // Define any controller functions
 const showUserRegistrationForm = (req, res) => {
@@ -31,5 +31,42 @@ const processUserRegistrationForm = async (req, res) => {
     }
 };
 
+const showLoginForm = (req, res) => {
+    const title = 'Log In';
+
+    res.render('login', { title });
+};
+
+const processLoginForm = async (req, res) => {
+    const { email, password } = req.body;
+
+    const user = await authenticateUser(email, password);
+
+    if (user) {
+        // Store the authenticated user on the session
+        req.session.user = user;
+
+        req.flash('success', 'Login successful!');
+        console.log('User logged in:', user);
+
+        return res.redirect('/');
+    }
+
+    req.flash('error', 'Invalid email or password. Please try again.');
+    res.redirect('/login');
+};
+
+const processLogout = (req, res) => {
+    // Clear the authenticated user from the session rather than calling
+    // req.session.destroy(): destroy() wipes the whole session - including
+    // the flash message - before it ever reaches the login page, so the
+    // "logged out" confirmation would silently never appear.
+    delete req.session.user;
+
+    req.flash('success', 'You have been logged out.');
+
+    res.redirect('/login');
+};
+
 // Export any controller functions
-export { showUserRegistrationForm, processUserRegistrationForm };
+export { showUserRegistrationForm, processUserRegistrationForm, showLoginForm, processLoginForm, processLogout };

@@ -1,3 +1,4 @@
+import bcrypt from 'bcrypt';
 import db from './db.js'
 
 /**
@@ -25,4 +26,61 @@ const createUser = async (name, email, passwordHash) => {
     return result.rows[0].user_id;
 }
 
-export { createUser }
+/**
+ * Finds a user in the database by email address.
+ * @param {string} email - The email address to look up.
+ * @returns {object|null} The matching user record, or null if none is found.
+ */
+const findUserByEmail = async (email) => {
+    const query = `
+        SELECT user_id, name, email, password_hash, role_id
+      FROM public.users
+      WHERE email = $1;
+    `;
+
+    const queryParams = [email];
+    const result = await db.query(query, queryParams);
+
+    if (result.rows.length === 0) {
+        return null; // User not found
+    }
+
+    return result.rows[0];
+}
+
+/**
+ * Checks a plain text password against a bcrypt hash.
+ * @param {string} password - The plain text password to check.
+ * @param {string} passwordHash - The stored bcrypt hash to compare against.
+ * @returns {boolean} True if the password matches the hash, false otherwise.
+ */
+const verifyPassword = async (password, passwordHash) => {
+    return bcrypt.compare(password, passwordHash);
+}
+
+/**
+ * Authenticates a user by email and password.
+ * @param {string} email - The email address to look up.
+ * @param {string} password - The plain text password to verify.
+ * @returns {object|null} The user object (without password_hash) if authentication succeeds, or null otherwise.
+ */
+const authenticateUser = async (email, password) => {
+    const user = await findUserByEmail(email);
+
+    if (!user) {
+        return null;
+    }
+
+    const passwordIsValid = await verifyPassword(password, user.password_hash);
+
+    if (!passwordIsValid) {
+        return null;
+    }
+
+    // Don't carry the password hash around outside the model
+    delete user.password_hash;
+
+    return user;
+}
+
+export { createUser, authenticateUser }
