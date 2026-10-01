@@ -1,0 +1,29 @@
+<%- include('partials/header') %>
+<main id="main-content">
+    <section class="page-intro">
+        <h1><%= title %></h1>
+        <p>All users currently registered in the system:</p>
+    </section>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% users.forEach(user => { %>
+                <tr>
+                    <td><%= user.name %></td>
+                    <td><%= user.email %></td>
+                    <td><%= user.role_name %></td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+
+    <p><a href="/dashboard">Back to dashboard</a></p>
+</main>
+<%- include('partials/footer') %>

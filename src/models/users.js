@@ -84,4 +84,21 @@ const authenticateUser = async (email, password) => {
     return user;
 }
 
-export { createUser, authenticateUser }
+/**
+ * Retrieves every registered user, along with their role name.
+ * @returns {object[]} An array of user records (name, email, role_name).
+ */
+const getAllUsers = async () => {
+    const query = `
+        SELECT u.user_id, u.name, u.email, r.role_name
+      FROM public.users u
+      JOIN public.roles r ON u.role_id = r.role_id
+      ORDER BY u.name;
+    `;
+
+    const result = await db.query(query);
+
+    return result.rows;
+}
+
+export { createUser, authenticateUser, getAllUsers }
