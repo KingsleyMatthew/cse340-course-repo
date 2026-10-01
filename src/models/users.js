@@ -27,15 +27,16 @@ const createUser = async (name, email, passwordHash) => {
 }
 
 /**
- * Finds a user in the database by email address.
+ * Finds a user in the database by email address, including their role name.
  * @param {string} email - The email address to look up.
- * @returns {object|null} The matching user record, or null if none is found.
+ * @returns {object|null} The matching user record (with role_name), or null if none is found.
  */
 const findUserByEmail = async (email) => {
     const query = `
-        SELECT user_id, name, email, password_hash, role_id
-      FROM public.users
-      WHERE email = $1;
+        SELECT u.user_id, u.name, u.email, u.password_hash, r.role_name
+      FROM public.users u
+      JOIN public.roles r ON u.role_id = r.role_id
+      WHERE u.email = $1;
     `;
 
     const queryParams = [email];
